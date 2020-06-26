@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "MyFunction.ServiceBus": {
+      "commandName": "Project",
+      "commandLineArgs": "host start --port 7070",
+      "environmentVariables": {
+        "AZURE_FUNCTION_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
