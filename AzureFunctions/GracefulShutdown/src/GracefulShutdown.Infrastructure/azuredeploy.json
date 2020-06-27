@@ -1,0 +1,289 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+    },
+    "variables": {
+        "resource_name_prefix": "[resourceGroup().name]",
+
+        /* Storage account */
+        "storageAccount_name": "[concat(variables('resource_name_prefix'), 'storage')]",
+        "storageAccount_id": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccount_name'))]",
+
+        /* App Service Plans */
+        "appServicePlan_af_httptrigger_name": "[concat(variables('resource_name_prefix'), '-http')]",
+        "appServicePlan_af_httptrigger_id": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlan_af_httptrigger_name'))]",
+        "appServicePlan_af_servicebustrigger_name": "[concat(variables('resource_name_prefix'), '-svcbus')]",
+        "appServicePlan_af_servicebustrigger_id": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlan_af_servicebustrigger_name'))]",
+
+        /* Azure Functions */
+        "functionApp_runtimeVersion": "~3",
+
+        "functionApp_httptrigger_name": "[concat(variables('resource_name_prefix'),  '-http')]",
+        "functionApp_httptrigger_id": "[resourceId('Microsoft.Web/sites', variables('functionApp_httptrigger_name'))]",
+
+        "functionApp_servicebustrigger_name": "[concat(variables('resource_name_prefix'),  '-svcbus')]",
+        "functionApp_servicebustrigger_id": "[resourceId('Microsoft.Web/sites', variables('functionApp_servicebustrigger_name'))]",
+
+        /* Service Bus */
+        "serviceBus_name": "[concat(variables('resource_name_prefix'), '-bus')]",
+        "serviceBus_id": "[resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBus_name'))]",
+        "serviceBus_sak_name": "RootManageSharedAccessKey",
+        "serviceBus_sak_id": "[resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', variables('serviceBus_name'), variables('serviceBus_sak_name'))]",
+        "serviceBus_queue_name": "queue",
+        "serviceBus_retryQueue_name": "retryHandling",
+
+        /* Application Insights */
+        "appInsights_name": "[concat(variables('resource_name_prefix'), '-ai')]",
+        "appInsights_id": "[resourceId('Microsoft.Insights/components', variables('appInsights_name'))]",
+
+
+        /* Service providers versions */
+
+        "storageAccount_version": "2019-04-01",
+        "appServicePlan_version": "[providers('Microsoft.Web', 'serverfarms').apiVersions[0]]",
+        "functionApp_version": "2018-02-01",
+        "serviceBus_version": "2017-04-01",
+        "appInsights_version": "2015-05-01"
+
+    },
+    "resources": [
+
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "[variables('storageAccount_version')]",
+            "name": "[variables('storageAccount_name')]",
+            "location": "westeurope",
+            "tags": {
+                "displayName": "Storage Account"
+            },
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "kind": "StorageV2"
+        },
+
+        {
+            "type": "Microsoft.ServiceBus/namespaces",
+            "apiVersion": "[variables('serviceBus_version')]",
+            "name": "[variables('serviceBus_name')]",
+            "location": "West Europe",
+            "tags": {
+                "displayName": "Service bus"
+            },
+            "sku": {
+                "name": "Standard",
+                "tier": "Standard"
+            },
+            "properties": {
+                "zoneRedundant": false
+            },
+            "resources": [
+
+                {
+                    "type": "authorizationRules",
+                    "apiVersion": "[variables('serviceBus_version')]",
+                    "name": "[variables('serviceBus_sak_name')]",
+                    "location": "West Europe",
+                    "tags": {
+                        "displayName": "Root SAK"
+                    },
+                    "dependsOn": [
+                        "[variables('serviceBus_id')]"
+                    ],
+                    "properties": {
+                        "rights": [
+                            "Listen",
+                            "Manage",
+                            "Send"
+                        ]
+                    }
+                },
+                {
+                    "type": "queues",
+                    "apiVersion": "[variables('serviceBus_version')]",
+                    "name": "[variables('serviceBus_queue_name')]",
+                    "location": "West Europe",
+                    "tags": {
+                        "displayName": "Queue"
+                    },
+                    "dependsOn": [
+                        "[variables('serviceBus_id')]"
+                    ],
+                    "properties": {
+                        "lockDuration": "PT30S",
+                        "maxSizeInMegabytes": 1024,
+                        "requiresDuplicateDetection": false,
+                        "requiresSession": false,
+                        "defaultMessageTimeToLive": "P1D",
+                        "deadLetteringOnMessageExpiration": false,
+                        "enableBatchedOperations": true,
+                        "duplicateDetectionHistoryTimeWindow": "PT10M",
+                        "maxDeliveryCount": 1,
+                        "status": "Active",
+                        "autoDeleteOnIdle": "P10675199DT2H48M5.4775807S",
+                        "enablePartitioning": false,
+                        "enableExpress": false
+                    }
+                },
+                {
+                    "type": "queues",
+                    "apiVersion": "[variables('serviceBus_version')]",
+                    "name": "[variables('serviceBus_retryQueue_name')]",
+                    "location": "West Europe",
+                    "tags": {
+                        "displayName": "Retry queue"
+                    },
+                    "dependsOn": [
+                        "[variables('serviceBus_id')]"
+                    ],
+                    "properties": {
+                        "status": "Active"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "[variables('appServicePlan_version')]",
+            "name": "[variables('appServicePlan_af_httptrigger_name')]",
+            "location": "West Europe",
+            "tags": {
+                "displayName": "App Service Plan - HTTP Trigger"
+            },
+            "sku": {
+                "name": "Y1",
+                "tier": "Dynamic",
+                "size": "Y1",
+                "family": "Y",
+                "capacity": 0
+            },
+            "kind": "functionapp",
+            "properties": {
+                "name": "[variables('appServicePlan_af_httptrigger_name')]",
+                "perSiteScaling": false,
+                "reserved": false,
+                "targetWorkerCount": 0,
+                "targetWorkerSizeId": 0
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "[variables('functionApp_version')]",
+            "name": "[variables('functionApp_httptrigger_name')]",
+            "location": "West Europe",
+            "tags": {
+                "displayName": "Azure Function - HTTP Trigger"
+            },
+            "dependsOn": [
+                "[variables('appServicePlan_af_httptrigger_id')]"
+            ],
+            "kind": "functionapp",
+            "properties": {
+                "enabled": true,
+                "serverFarmId": "[variables('appServicePlan_af_httptrigger_id')]"
+            },
+            "resources": [
+                {
+                    "apiVersion": "[variables('functionApp_version')]",
+                    "name": "appsettings",
+                    "type": "config",
+                    "dependsOn": [
+                        "[variables('functionApp_httptrigger_id')]",
+                        "[variables('appInsights_id')]",
+                        "[variables('storageAccount_id')]"
+                    ],
+                    "properties": {
+                        "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(variables('appInsights_id'), variables('appInsights_version')).InstrumentationKey]",
+                        "FUNCTIONS_EXTENSION_VERSION": "[variables('functionApp_runtimeVersion')]",
+                        "FUNCTION_APP_EDIT_MODE": "readonly",
+                        "FUNCTIONS_WORKER_RUNTIME": "dotnet",
+                        "WEBSITE_RUN_FROM_PACKAGE": "1",
+                        "AzureWebJobsStorage": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccount_name'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccount_name')), variables('storageAccount_version')).keys[0].value, ';EndpointSuffix=core.windows.net')]"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "[variables('appServicePlan_version')]",
+            "name": "[variables('appServicePlan_af_servicebustrigger_name')]",
+            "location": "West Europe",
+            "tags": {
+                "displayName": "App Service Plan - Service Bus Trigger"
+            },
+            "sku": {
+                "name": "Y1",
+                "tier": "Dynamic",
+                "size": "Y1",
+                "family": "Y",
+                "capacity": 0
+            },
+            "kind": "functionapp",
+            "properties": {
+                "name": "[variables('appServicePlan_af_servicebustrigger_name')]",
+                "perSiteScaling": false,
+                "reserved": false,
+                "targetWorkerCount": 0,
+                "targetWorkerSizeId": 0
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "[variables('functionApp_version')]",
+            "name": "[variables('functionApp_servicebustrigger_name')]",
+            "location": "West Europe",
+            "tags": {
+                "displayName": "Shortlink reader Azure Function"
+            },
+            "dependsOn": [
+                "[variables('appServicePlan_af_servicebustrigger_id')]"
+            ],
+            "kind": "functionapp",
+            "properties": {
+                "enabled": true,
+                "serverFarmId": "[variables('appServicePlan_af_servicebustrigger_id')]"
+            },
+            "resources": [
+                {
+                    "apiVersion": "[variables('functionApp_version')]",
+                    "name": "appsettings",
+                    "type": "config",
+                    "dependsOn": [
+                        "[variables('functionApp_servicebustrigger_id')]",
+                        "[variables('appInsights_id')]",
+                        "[variables('storageAccount_id')]",
+                        "[variables('serviceBus_id')]"
+                    ],
+                    "properties": {
+                        "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(variables('appInsights_id'), variables('appInsights_version')).InstrumentationKey]",
+                        "FUNCTIONS_EXTENSION_VERSION": "[variables('functionApp_runtimeVersion')]",
+                        "FUNCTION_APP_EDIT_MODE": "readonly",
+                        "FUNCTIONS_WORKER_RUNTIME": "dotnet",
+                        "WEBSITE_RUN_FROM_PACKAGE": "1",
+                        "AzureWebJobsStorage": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccount_name'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccount_name')), variables('storageAccount_version')).keys[0].value, ';EndpointSuffix=core.windows.net')]",
+                        "ServiceBusConnectionString": "[listkeys(variables('serviceBus_sak_id'), variables('serviceBus_version')).primaryConnectionString]"
+                    }
+                }
+            ]
+        },
+
+        {
+            "type": "Microsoft.Insights/components",
+            "apiVersion": "[variables('appInsights_version')]",
+            "name": "[variables('appInsights_name')]",
+            "location": "westeurope",
+            "tags": {
+                "displayName": "Application Insights"
+            },
+            "kind": "web",
+            "properties": {
+                "Application_Type": "web",
+                "Flow_Type": "Redfield",
+                "Request_Source": "AppServiceEnablementCreate"
+            }
+        }
+    ],
+    "outputs": {}
+}

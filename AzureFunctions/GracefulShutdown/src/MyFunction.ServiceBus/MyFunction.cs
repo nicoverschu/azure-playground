@@ -17,14 +17,12 @@ namespace MyFunction.ServiceBus
             this.log = log;
         }
 
-#error Please, setup a valid Service Bus connection string
-
         [FunctionName(nameof(RunAsync))]
         public async Task RunAsync(
-            [ServiceBusTrigger("#queueName#", Connection = "ServiceBusConnectionString")]
+            [ServiceBusTrigger("queue", Connection = "ServiceBusConnectionString")]
             Message message,
-            [ServiceBus("#queueName#", Connection = "ServiceBusConnectionString")]
-            MessageSender queue,
+            [ServiceBus("retryHandling", Connection = "ServiceBusConnectionString")]
+            MessageSender retryQueue,
             CancellationToken cancellationToken)
         {
             MyServiceBusMessage msg;
@@ -49,12 +47,12 @@ namespace MyFunction.ServiceBus
             catch (Exception)
             {
                 log.LogError($"HOST IS BEING SHUT DOWN - IsCancellationRequested={cancellationToken.IsCancellationRequested}");
-                log.LogError($"Waiting for {msg.nSecondsShutdownDuration} seconds before scheduling message...");
-                await Task.Delay(msg.nSecondsShutdownDuration * 1000); // observation: shutdown occurs immediately.
+                log.LogError($"Waiting for {msg.nSecondsShutdownDuration} seconds before sending message to retry queue...");
+                await Task.Delay(msg.nSecondsShutdownDuration * 1000); // observation: ?
 
-                // Schedule message back in the queue, so that it is processed one minute later
+                // Send the message in a retry queue
                 var retryMsg = new Message(message.Body);
-                await queue.ScheduleMessageAsync(retryMsg, DateTimeOffset.UtcNow + TimeSpan.FromMinutes(1));
+                await retryQueue.SendAsync(retryMsg);
             }
         }
     }

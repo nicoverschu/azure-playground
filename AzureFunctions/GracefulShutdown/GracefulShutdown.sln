@@ -14,6 +14,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		readme.md = readme.md
 	EndProjectSection
 EndProject
+Project("{151D2E53-A2C4-4D7D-83FE-D05416EBD58E}") = "GracefulShutdown.Infrastructure", "src\GracefulShutdown.Infrastructure\GracefulShutdown.Infrastructure.deployproj", "{D760B193-507F-4077-ADA6-9FE864E07190}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,6 +30,10 @@ Global
 		{F54E6DDB-19D9-4018-B301-0B62F9B63D07}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F54E6DDB-19D9-4018-B301-0B62F9B63D07}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F54E6DDB-19D9-4018-B301-0B62F9B63D07}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D760B193-507F-4077-ADA6-9FE864E07190}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D760B193-507F-4077-ADA6-9FE864E07190}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D760B193-507F-4077-ADA6-9FE864E07190}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D760B193-507F-4077-ADA6-9FE864E07190}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -35,6 +41,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{309D0FC8-FE36-44BC-958E-AE045F342F14} = {9412458C-32E9-4269-BFB7-B6F6B4D1E771}
 		{F54E6DDB-19D9-4018-B301-0B62F9B63D07} = {9412458C-32E9-4269-BFB7-B6F6B4D1E771}
+		{D760B193-507F-4077-ADA6-9FE864E07190} = {9412458C-32E9-4269-BFB7-B6F6B4D1E771}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E26AA08A-7F9D-4866-AEE6-0BC5CA276360}
