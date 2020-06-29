@@ -48,6 +48,7 @@ Once shutdown has been triggered, function user code will wait for 4 seconds bef
 
 #### With an HTTP trigger Azure Function
 * Deploy the HTTP trigger Azure Function on `whatever-http`
+
 TO BE TESTED
 
 #### With a Service Bus trigger Azure Function
@@ -63,13 +64,13 @@ TO BE TESTED
 
 * trigger a function app restart from the portal, for example
 
-What i what to achieve is to save the messages that were being processed to another queue, so that they are handled later on.
-I want to avoid messages in the dead-letter queue (potential duplicates)
-I've set the Max delivery count to 1 on the queue which triggers the function
+What i want to achieve is to save the messages that were being processed to another queue, so that they are handled later on.
+I want to avoid messages in the dead-letter queue (potential duplicates).
+I've set the Max delivery count to 1 on the queue which triggers the function.
 So far i have some messages in the `retryhandling` queue and some messages in the dead-letter.
 
-Next step: 
+Next steps: 
 * setup a queue which keeps the messages that were processed without any trouble.
-* increase the max delivery count of `queue` in order to see if i end up with actual duplicates
+* increase the max delivery count of `queue` in order to see if i end up with actual duplicates.
 
 
